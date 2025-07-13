@@ -21,6 +21,9 @@
     <assertj-core.version>3.27.3</assertj-core.version>
     <main.verticle>com.alar.rinha2025.payment_gateway.MainVerticle</main.verticle>
     <launcher.class>io.vertx.launcher.application.VertxApplication</launcher.class>
+    <testcontainers.version>1.20.2</testcontainers.version>
+    <logback-classic.version>1.5.18</logback-classic.version>
+    <postgresql-driver.version>42.7.7</postgresql-driver.version>
   </properties>
 
   <dependencyManagement>
@@ -53,6 +56,15 @@
       <artifactId>vertx-lang-kotlin</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-pg-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql-driver.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-stdlib</artifactId>
       <version>${kotlin.version}</version>
@@ -60,7 +72,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.18</version>
+      <version>${logback-classic.version}</version>
     </dependency>
 
     <dependency>
@@ -90,6 +102,18 @@
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>mockwebserver</artifactId>
       <version>${okhttp.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
