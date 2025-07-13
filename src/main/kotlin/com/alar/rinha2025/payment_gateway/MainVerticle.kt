@@ -35,7 +35,7 @@ class MainVerticle : VerticleBase() {
         val bodyAsJson = body.asJsonObject()
         val correlationId = bodyAsJson.getString("correlationId")
         val amount = bodyAsJson.getString("amount")
-        PaymentRequest(correlationId, BigDecimal(amount))
+
         val reqObject = JsonObject()
         reqObject.put("correlationId", correlationId)
         reqObject.put("amount", amount)
