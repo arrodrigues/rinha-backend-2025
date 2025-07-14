@@ -10,14 +10,9 @@ import io.vertx.ext.web.client.HttpRequest
 import io.vertx.ext.web.client.HttpResponse
 import io.vertx.ext.web.client.WebClient
 import io.vertx.ext.web.handler.BodyHandler
-import io.vertx.kotlin.core.streams.end
 import io.vertx.pgclient.PgBuilder
 import io.vertx.pgclient.PgConnectOptions
-import io.vertx.sqlclient.Pool
-import io.vertx.sqlclient.PoolOptions
-import io.vertx.sqlclient.Row
-import io.vertx.sqlclient.RowSet
-import io.vertx.sqlclient.Tuple
+import io.vertx.sqlclient.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
@@ -124,7 +119,7 @@ class MainVerticle : VerticleBase() {
             connection
               .preparedQuery(
                 "SELECT COUNT(*) as count, SUM(amount) total_amount, fallback as fallback FROM payments " +
-                  " WHERE requestedAt >= $1 AND requestedAt <= $2 group by fallback"
+                  " WHERE requestedAt >= $1 AND requestedAt <=   $2 group by fallback"
               )
               .execute(Tuple.of(from, to))
               .onComplete { connection.close() }

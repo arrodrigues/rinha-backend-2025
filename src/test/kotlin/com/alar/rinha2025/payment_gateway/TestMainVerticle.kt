@@ -68,6 +68,12 @@ class TestMainVerticle {
 
   @BeforeEach
   fun setUp(vertx: Vertx, testContext: VertxTestContext) {
+    connection.createStatement().use { statement ->
+      statement.execute(
+        "TRUNCATE TABLE payments".trimIndent()
+      )
+    }
+
     val cfg =
       JsonObject()
         .put("payments-processor-uri", "http://localhost:9999/payments")
