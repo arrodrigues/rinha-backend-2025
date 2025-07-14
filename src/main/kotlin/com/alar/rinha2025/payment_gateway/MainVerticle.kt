@@ -22,36 +22,26 @@ import java.time.format.DateTimeFormatter
 
 
 class MainVerticle : VerticleBase() {
-  val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
-  override fun start(): Future<*> {
 
-    val AMOUNT_MULTIPLIER = BigDecimal("1000")
+  companion object {
+    val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
+    val AMOUNT_MULTIPLIER = 1000L
+    val AMOUNT_MULTIPLIER_BIG = BigDecimal(AMOUNT_MULTIPLIER)
+    val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
+  }
+
+  override fun start(): Future<*> {
     val router = Router.router(vertx)
     val config = vertx.orCreateContext.config()
-    val paymentsProcessorUri = config.getString("payments-processor-uri")
-    val dbUser = config.getString("db-user")
-    val dbPass = config.getString("db-pass")
-    val dbHost = config.getString("db-host")
-    val dbPort = config.getInteger("db-port")
-    val dbName = config.getString("db-name")
-    val webClient = WebClient.create(vertx);
-    val paymentProcessorRequest: HttpRequest<Buffer> = webClient!!.postAbs(paymentsProcessorUri)
-    val poolOptions: PoolOptions = PoolOptions().setMaxSize(10)
-    val connectOptions = PgConnectOptions()
-    connectOptions.password = dbPass
-    connectOptions.user = dbUser
-    connectOptions.host = dbHost
-    connectOptions.port = dbPort
-    connectOptions.database = dbName
-    connectOptions.cachePreparedStatements = true
 
-    val isoFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
+    val paymentsProcessorUri = config.getString("payments-processor-uri")
+    val paymentProcessorRequest: HttpRequest<Buffer> = WebClient.create(vertx)!!.postAbs(paymentsProcessorUri)
 
     val pgPool: Pool =
       PgBuilder
         .pool()
-        .with(poolOptions)
-        .connectingTo(connectOptions)
+        .with(PoolOptions().setMaxSize(10))
+        .connectingTo(createPgConnectionOptions(config))
         .using(vertx)!!.build()
 
     router.route().handler(BodyHandler.create())
@@ -59,11 +49,10 @@ class MainVerticle : VerticleBase() {
     router
       .route(HttpMethod.POST, "/payments")
       .handler { context ->
-
         val body = context.body()
         val bodyAsJson = body.asJsonObject()
         val correlationId = bodyAsJson.getString("correlationId")
-        val amount = BigDecimal(bodyAsJson.getString("amount")).multiply(AMOUNT_MULTIPLIER)
+        val amount = bodyAsJson.getDouble("amount") * AMOUNT_MULTIPLIER
         val requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
         val reqObject = JsonObject()
         reqObject.put("correlationId", correlationId)
@@ -88,11 +77,12 @@ class MainVerticle : VerticleBase() {
               }
               .onComplete { ar ->
                 if (ar.succeeded()) {
-                  context.end()
+                  context.response().statusCode = 200
+                  context.response().end() // End response here
                 } else {
-                  logger.error("Failed to insert payment", ar.cause())
+                  logger.error("Failed to insert payment into DB: ${ar.cause().message}", ar.cause())
                   context.response().statusCode = 500
-                  context.fail(500)
+                  context.response().end("Internal Server Error: Database insertion failed.")
                 }
               }
           }
@@ -107,11 +97,13 @@ class MainVerticle : VerticleBase() {
       .handler { context ->
 
         val request = context.request()
-        val paramFrom = request.getParam("from")
-        val paramTo = request.getParam("to")
+        val paramFrom: String? = request.getParam("from")
+        val paramTo: String? = request.getParam("to")
 
-        val from: LocalDateTime = ZonedDateTime.parse(paramFrom, isoFormatter).toLocalDateTime()
-        val to: LocalDateTime = ZonedDateTime.parse(paramTo, isoFormatter).toLocalDateTime()
+        val from: LocalDateTime =
+          if (paramFrom != null) ZonedDateTime.parse(paramFrom, isoFormatter).toLocalDateTime() else LocalDateTime.MIN
+        val to: LocalDateTime =
+          if (paramTo != null) ZonedDateTime.parse(paramTo, isoFormatter).toLocalDateTime() else LocalDateTime.MAX
 
         pgPool
           .connection
@@ -131,7 +123,7 @@ class MainVerticle : VerticleBase() {
                   val fallBack = row.getBoolean("fallback")
                   val totalAmountLong = row.getLong("total_amount")
                   val totalAmountDouble = BigDecimal(totalAmountLong)
-                    .divide(AMOUNT_MULTIPLIER, 2, RoundingMode.HALF_UP).toDouble()
+                    .divide(AMOUNT_MULTIPLIER_BIG, 2, RoundingMode.HALF_UP).toDouble()
 
                   val paymentProcessor = JsonObject()
                   paymentProcessor.put("totalRequests", count)
@@ -151,7 +143,8 @@ class MainVerticle : VerticleBase() {
           .onComplete { ar ->
             if (ar.succeeded()) {
               context.response().statusCode = 200
-              context.response().end(ar!!.result().encode())
+              context.response().putHeader("content-type", "application/json")
+              context.response().end(ar.result().encode())
             } else {
               logger.error("Failed to get payment summary from DB: ${ar.cause().message}", ar.cause())
               context.response().statusCode = 500
@@ -166,5 +159,16 @@ class MainVerticle : VerticleBase() {
       .listen(8888).onSuccess { http ->
         logger.info("HTTP server started on port 8888")
       }
+  }
+
+  private fun createPgConnectionOptions(config: JsonObject): PgConnectOptions {
+    val connectOptions = PgConnectOptions()
+    connectOptions.password = config.getString("db-pass")
+    connectOptions.user = config.getString("db-user")
+    connectOptions.host = config.getString("db-host")
+    connectOptions.port = config.getInteger("db-port")
+    connectOptions.database = config.getString("db-name")
+    connectOptions.cachePreparedStatements = true
+    return connectOptions
   }
 }
