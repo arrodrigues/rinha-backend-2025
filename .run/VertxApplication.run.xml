@@ -1,0 +1,25 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="VertxApplication" type="Application" factoryName="Application" nameIsGenerated="true">
+    <envs>
+      <env name="main.verticle" value="com.alar.rinha2025.payment_gateway.MainVerticle" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="io.vertx.launcher.application.VertxApplication" />
+    <module name="payment-gateway" />
+    <option name="PROGRAM_PARAMETERS" value="com.alar.rinha2025.payment_gateway.MainVerticle -conf &quot;{\&quot;payments-processor-uri\&quot;:\&quot;http://localhost:9999/payments\&quot;}&quot;" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="io.vertx.launcher.application.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <extension name="software.aws.toolkits.jetbrains.core.execution.JavaAwsConnectionExtension">
+      <option name="credential" />
+      <option name="region" />
+      <option name="useCurrentConnection" value="false" />
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="docker-compose.yml: Compose Deployment" run_configuration_type="docker-deploy" />
+    </method>
+  </configuration>
+</component>
