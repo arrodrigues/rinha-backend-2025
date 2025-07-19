@@ -1,5 +1,6 @@
 package com.alar.rinha2025.payment_gateway
 
+import com.alar.rinha2025.payment_gateway.setup.TestContainerSetup
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -13,56 +14,39 @@ import io.vertx.kotlin.core.json.get
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import java.sql.Connection
 import java.sql.DriverManager
 
 
-@Testcontainers
 @ExtendWith(VertxExtension::class)
 class TestMainVerticle {
 
 
   companion object {
-    private val DB_PASSWORD: String = "integration_pw"
-    private val DB_USERNAME: String = "integration_username"
-    private val DB_NAME: String = "integration_dbname"
-    private val DB_PORT = 5432
-    private var connection: Connection
+    private const val DB_PASSWORD: String = "integration_pw"
+    private const val DB_USERNAME: String = "integration_username"
+    private const val DB_NAME: String = "integration_dbname"
+    private const val DB_HOST = "localhost"
+    private const val DB_PORT = 5432
+    private const val JDBC_URL: String = "jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME"
+    private lateinit var connection: Connection
 
-    @Container
-    private val postgresqlContainer: PostgreSQLContainer<Nothing> = PostgreSQLContainer<Nothing>("postgres:16.9")
-      .apply {
-        withDatabaseName(DB_NAME)
-        withUsername(DB_USERNAME)
-        withPassword(DB_PASSWORD)
-      }
+    @BeforeAll
+    @JvmStatic
+    fun beforeAll() {
+      TestContainerSetup.start()
+      connection = DriverManager.getConnection(JDBC_URL, DB_USERNAME, DB_PASSWORD)
+    }
 
-    init {
-      postgresqlContainer.start()
-      connection = DriverManager.getConnection(
-        postgresqlContainer.jdbcUrl,
-        postgresqlContainer.username,
-        postgresqlContainer.password
-      )
-
-      connection.createStatement().use { statement ->
-        statement.execute(
-          """
-            CREATE TABLE payments (
-              correlationId UUID primary key,
-              amount BIGINT,
-              requestedAt TIMESTAMP,
-              fallback boolean
-            )
-          """.trimIndent()
-        )
-      }
+    @JvmStatic
+    @AfterAll
+    fun afterAll() {
+      TestContainerSetup.stop()
     }
   }
 
@@ -77,10 +61,10 @@ class TestMainVerticle {
     val cfg =
       JsonObject()
         .put("payments-processor-uri", "http://localhost:9999/payments")
-        .put("db-user", postgresqlContainer.username)
-        .put("db-pass", postgresqlContainer.password)
-        .put("db-host", "localhost")
-        .put("db-port", postgresqlContainer.getMappedPort(DB_PORT))
+        .put("db-user", DB_USERNAME)
+        .put("db-pass", DB_PASSWORD)
+        .put("db-host", DB_HOST)
+        .put("db-port", DB_PORT)
         .put("db-name", DB_NAME)
     vertx
       .deployVerticle(MainVerticle(), DeploymentOptions().setConfig(cfg))
