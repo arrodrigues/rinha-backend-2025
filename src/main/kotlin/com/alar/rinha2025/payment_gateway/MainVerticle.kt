@@ -25,7 +25,7 @@ class MainVerticle : VerticleBase() {
 
   companion object {
     val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
-    val AMOUNT_MULTIPLIER = 1000L
+    const val AMOUNT_MULTIPLIER = 1000L
     val AMOUNT_MULTIPLIER_BIG = BigDecimal(AMOUNT_MULTIPLIER)
     val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
   }
@@ -35,14 +35,14 @@ class MainVerticle : VerticleBase() {
     val config = vertx.orCreateContext.config()
 
     val paymentsProcessorUri = config.getString("payments-processor-uri")
-    val paymentProcessorRequest: HttpRequest<Buffer> = WebClient.create(vertx)!!.postAbs(paymentsProcessorUri)
+    val paymentProcessorRequest: HttpRequest<Buffer> = WebClient.create(vertx).postAbs(paymentsProcessorUri)
 
     val pgPool: Pool =
       PgBuilder
         .pool()
         .with(PoolOptions().setMaxSize(10))
         .connectingTo(createPgConnectionOptions(config))
-        .using(vertx)!!.build()
+        .using(vertx).build()
 
     router.route().handler(BodyHandler.create())
 
@@ -59,7 +59,7 @@ class MainVerticle : VerticleBase() {
         reqObject.put("amount", bodyAsJson.getDouble("amount"))
         paymentProcessorRequest
           .sendJson(reqObject)
-          .onSuccess { httpResponse: HttpResponse<Buffer>? ->
+          .onSuccess { _: HttpResponse<Buffer>? ->
             context.response().statusCode = 200
             //todo: leave the body as empty as possible
             //todo: get from payment process circuit breaker if it was executed on default or fallback
@@ -156,7 +156,7 @@ class MainVerticle : VerticleBase() {
 
     return vertx.createHttpServer()
       .requestHandler(router)
-      .listen(8888).onSuccess { http ->
+      .listen(8888).onSuccess { _ ->
         logger.info("HTTP server started on port 8888")
       }
   }
