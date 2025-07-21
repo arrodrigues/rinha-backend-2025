@@ -1,5 +1,6 @@
 package com.alar.rinha2025.payment_gateway
 
+import com.alar.rinha2025.payment_gateway.config.AppConfig
 import io.vertx.core.Future
 import io.vertx.core.VerticleBase
 import io.vertx.core.buffer.Buffer
@@ -32,16 +33,15 @@ class MainVerticle : VerticleBase() {
 
   override fun start(): Future<*> {
     val router = Router.router(vertx)
-    val config = vertx.orCreateContext.config()
 
-    val paymentsProcessorUri = config.getString("payments-processor-uri")
-    val paymentProcessorRequest: HttpRequest<Buffer> = WebClient.create(vertx).postAbs(paymentsProcessorUri)
+    val paymentsProcessorUri = AppConfig.getDefaultPaymentProcessorUri()
+    val paymentProcessorRequest: HttpRequest<Buffer> = WebClient.create(vertx)!!.postAbs(paymentsProcessorUri)
 
     val pgPool: Pool =
       PgBuilder
         .pool()
         .with(PoolOptions().setMaxSize(10))
-        .connectingTo(createPgConnectionOptions(config))
+        .connectingTo(createPgConnectionOptions())
         .using(vertx).build()
 
     router.route().handler(BodyHandler.create())
@@ -154,20 +154,21 @@ class MainVerticle : VerticleBase() {
       }
 
 
+    val port = AppConfig.getServerPort()
     return vertx.createHttpServer()
       .requestHandler(router)
-      .listen(8888).onSuccess { _ ->
-        logger.info("HTTP server started on port 8888")
+      .listen(port).onSuccess { _ ->
+        logger.info("HTTP server started on port $port")
       }
   }
 
-  private fun createPgConnectionOptions(config: JsonObject): PgConnectOptions {
+  private fun createPgConnectionOptions(): PgConnectOptions {
     val connectOptions = PgConnectOptions()
-    connectOptions.password = config.getString("db-pass")
-    connectOptions.user = config.getString("db-user")
-    connectOptions.host = config.getString("db-host")
-    connectOptions.port = config.getInteger("db-port")
-    connectOptions.database = config.getString("db-name")
+    connectOptions.password = AppConfig.getDbPassword()
+    connectOptions.user = AppConfig.getDbUsername()
+    connectOptions.host = AppConfig.getDbHost()
+    connectOptions.port = AppConfig.getDbPort()
+    connectOptions.database = AppConfig.getDbName()
     connectOptions.cachePreparedStatements = true
     return connectOptions
   }

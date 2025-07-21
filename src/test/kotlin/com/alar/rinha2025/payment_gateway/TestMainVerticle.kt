@@ -1,5 +1,6 @@
 package com.alar.rinha2025.payment_gateway
 
+import com.alar.rinha2025.payment_gateway.config.AppConfig
 import com.alar.rinha2025.payment_gateway.setup.TestContainerSetup
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
@@ -28,19 +29,16 @@ class TestMainVerticle {
 
 
   companion object {
-    private const val DB_PASSWORD: String = "integration_pw"
-    private const val DB_USERNAME: String = "integration_username"
-    private const val DB_NAME: String = "integration_dbname"
-    private const val DB_HOST = "localhost"
-    private const val DB_PORT = 5432
-    private const val JDBC_URL: String = "jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME"
     private lateinit var connection: Connection
+    private val JDBC_URL: String =
+      "jdbc:postgresql://${AppConfig.getDbHost()}:${AppConfig.getDbPort()}/${AppConfig.getDbName()}"
 
     @BeforeAll
     @JvmStatic
     fun beforeAll() {
       TestContainerSetup.start()
-      connection = DriverManager.getConnection(JDBC_URL, DB_USERNAME, DB_PASSWORD)
+      connection = DriverManager
+        .getConnection(JDBC_URL, AppConfig.getDbUsername(), AppConfig.getDbPassword())
     }
 
     @JvmStatic
@@ -58,16 +56,8 @@ class TestMainVerticle {
       )
     }
 
-    val cfg =
-      JsonObject()
-        .put("payments-processor-uri", "http://localhost:9999/payments")
-        .put("db-user", DB_USERNAME)
-        .put("db-pass", DB_PASSWORD)
-        .put("db-host", DB_HOST)
-        .put("db-port", DB_PORT)
-        .put("db-name", DB_NAME)
     vertx
-      .deployVerticle(MainVerticle(), DeploymentOptions().setConfig(cfg))
+      .deployVerticle(MainVerticle(), DeploymentOptions().setConfig(AppConfig.config))
       .onComplete(testContext.succeedingThenComplete())
 
   }
@@ -76,7 +66,7 @@ class TestMainVerticle {
   fun test_payment(vertx: Vertx, testContext: VertxTestContext) {
 
     val server = MockWebServer()
-    server.start(9999)
+    server.start(9000)
     server.enqueue(
       MockResponse.Builder()
         .code(200)
@@ -85,7 +75,7 @@ class TestMainVerticle {
     )
     val req =
       WebClient.create(vertx)
-        .post(8888, "localhost", "/payments")
+        .post(AppConfig.getServerPort(), "localhost", "/payments")
 
     req
       .putHeader("Content-Type", "application/json")
@@ -122,12 +112,12 @@ class TestMainVerticle {
   fun test_summary_after_payments(vertx: Vertx, testContext: VertxTestContext) {
 
     val server = MockWebServer()
-    server.start(9999)
+    server.start(9000)
     server.enqueue(MockResponse.Builder().code(200).build())
     server.enqueue(MockResponse.Builder().code(200).build())
     server.enqueue(MockResponse.Builder().code(200).build())
 
-    val req = WebClient.create(vertx).post(8888, "localhost", "/payments")
+    val req = WebClient.create(vertx).post(AppConfig.getServerPort(), "localhost", "/payments")
 
     Future.all(
       req
@@ -148,7 +138,7 @@ class TestMainVerticle {
         )
     )
       .compose {
-        WebClient.create(vertx).get(8888, "localhost", "/payments-summary")
+        WebClient.create(vertx).get(AppConfig.getServerPort(), "localhost", "/payments-summary")
           .putHeader("Content-Type", "application/json")
           .addQueryParam("from", "2018-07-10T00:00:00.000Z")
           .addQueryParam("to", "2070-07-10T00:00:00.000Z")
@@ -169,7 +159,7 @@ class TestMainVerticle {
 
 
           testContext.completeNow()
-          server.close();
+          server.close()
         }
       }
 
