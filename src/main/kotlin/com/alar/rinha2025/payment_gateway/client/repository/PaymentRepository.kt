@@ -15,9 +15,9 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDateTime
 
-class PaymentRepository(val pgPool: Pool) { // Made pgPool public for MainVerticle
+class PaymentRepository(val pgPool: Pool) {
     companion object {
-        private const val AMOUNT_MULTIPLIER = 1000L // Removed redundant semicolon
+        private const val AMOUNT_MULTIPLIER = 1000L
         private val AMOUNT_MULTIPLIER_BIG = BigDecimal(AMOUNT_MULTIPLIER)
         private val logger: Logger = LoggerFactory.getLogger(PaymentRepository::class.java)
     }
@@ -38,11 +38,9 @@ class PaymentRepository(val pgPool: Pool) { // Made pgPool public for MainVertic
                 .onSuccess {
                     logger.info("Payment saved successfully: {}", payment.correlationId)
                 }
-                // This is the crucial fix: log the actual error.
                 .onFailure { error ->
                     logger.error("Failed to save payment {}: {}", payment.correlationId, error.message, error)
                 }
-                // Map the result to Future<Unit> for idiomatic Kotlin.
                 .map { }
         }
     }
