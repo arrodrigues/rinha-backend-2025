@@ -3,6 +3,7 @@ package com.alar.rinha2025.payment_gateway
 import com.alar.rinha2025.payment_gateway.config.AppConfig
 import com.alar.rinha2025.payment_gateway.config.AppResources
 import com.alar.rinha2025.payment_gateway.domain.Payment
+import com.alar.rinha2025.payment_gateway.extensions.toJson
 import io.vertx.core.Future
 import io.vertx.core.VerticleBase
 import io.vertx.core.buffer.Buffer
@@ -94,7 +95,7 @@ class MainVerticle : VerticleBase() {
             if (ar.succeeded()) {
               context.response().statusCode = 200
               context.response().putHeader("content-type", "application/json")
-              context.response().end(ar.result().encode())
+              context.response().end(ar.result().toJson())
             } else {
               logger.error("Failed to get payment summary from DB: ${ar.cause().message}", ar.cause())
               context.response().statusCode = 500

@@ -2,8 +2,9 @@ package com.alar.rinha2025.payment_gateway.client.repository
 
 import com.alar.rinha2025.payment_gateway.MainVerticle
 import com.alar.rinha2025.payment_gateway.domain.Payment
+import com.alar.rinha2025.payment_gateway.domain.PaymentSummary
+import com.alar.rinha2025.payment_gateway.domain.ProcessorSummary
 import io.vertx.core.Future
-import io.vertx.core.json.JsonObject
 import io.vertx.sqlclient.Pool
 import io.vertx.sqlclient.Row
 import io.vertx.sqlclient.RowSet
@@ -46,7 +47,7 @@ class PaymentRepository(val pgPool: Pool) { // Made pgPool public for MainVertic
         }
     }
 
-    fun getSummary(from: LocalDateTime, to: LocalDateTime): Future<JsonObject> {
+    fun getSummary(from: LocalDateTime, to: LocalDateTime): Future<PaymentSummary> {
         return pgPool.withConnection { connection ->
             connection
                 .preparedQuery(
@@ -56,28 +57,22 @@ class PaymentRepository(val pgPool: Pool) { // Made pgPool public for MainVertic
                 .execute(Tuple.of(from, to))
                 .onComplete { connection.close() }
                 .compose { rows: RowSet<Row> ->
-                    val paymentSummaryResult: JsonObject = JsonObject()
+                    var fallback: ProcessorSummary? = null
+                    var default: ProcessorSummary? = null
                     for (row: Row in rows) {
-
                         val count = row.getLong("count")
-                        val fallBack = row.getBoolean("fallback")
+                        val isFallBack = row.getBoolean("fallback")
                         val totalAmountLong = row.getLong("total_amount")
                         val totalAmountDouble = BigDecimal(totalAmountLong)
-                            .divide(MainVerticle.Companion.AMOUNT_MULTIPLIER_BIG, 2, RoundingMode.HALF_UP).toDouble()
+                            .divide(MainVerticle.Companion.AMOUNT_MULTIPLIER_BIG, 2, RoundingMode.HALF_UP)
 
-                        val paymentProcessor = JsonObject()
-                        paymentProcessor.put("totalRequests", count)
-                        paymentProcessor.put(
-                            "totalAmount", totalAmountDouble
-                        )
-
-                        if (fallBack) {
-                            paymentSummaryResult.put("fallback", paymentProcessor)
+                        if (isFallBack) {
+                            fallback = ProcessorSummary(count, totalAmountDouble)
                         } else {
-                            paymentSummaryResult.put("default", paymentProcessor)
+                            default = ProcessorSummary(count, totalAmountDouble)
                         }
                     }
-                    Future<JsonObject>.succeededFuture(paymentSummaryResult)
+                    Future<PaymentSummary>.succeededFuture(PaymentSummary(default, fallback))
                 }
         }
 
