@@ -1,6 +1,5 @@
 package com.alar.rinha2025.payment_gateway.client.repository
 
-import com.alar.rinha2025.payment_gateway.MainVerticle
 import com.alar.rinha2025.payment_gateway.domain.Payment
 import com.alar.rinha2025.payment_gateway.domain.PaymentSummary
 import com.alar.rinha2025.payment_gateway.domain.ProcessorSummary
@@ -23,7 +22,6 @@ class PaymentRepository(val pgPool: Pool) {
     }
 
     fun savePayment(payment: Payment, requestedAt: LocalDateTime, fallback: Boolean): Future<Unit> {
-        // withConnection is a great pattern that correctly handles resource cleanup.
         val amountAsLong = payment.amount.multiply(AMOUNT_MULTIPLIER_BIG).toLong()
         return pgPool.withConnection { connection ->
 
@@ -62,7 +60,7 @@ class PaymentRepository(val pgPool: Pool) {
                         val isFallBack = row.getBoolean("fallback")
                         val totalAmountLong = row.getLong("total_amount")
                         val totalAmountDouble = BigDecimal(totalAmountLong)
-                            .divide(MainVerticle.Companion.AMOUNT_MULTIPLIER_BIG, 2, RoundingMode.HALF_UP)
+                            .divide(AMOUNT_MULTIPLIER_BIG, 2, RoundingMode.HALF_UP)
 
                         if (isFallBack) {
                             fallback = ProcessorSummary(count, totalAmountDouble)

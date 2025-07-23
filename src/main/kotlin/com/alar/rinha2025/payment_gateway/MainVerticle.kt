@@ -26,8 +26,6 @@ class MainVerticle : VerticleBase() {
 
   companion object {
     val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
-    const val AMOUNT_MULTIPLIER = 1000L
-    val AMOUNT_MULTIPLIER_BIG = BigDecimal(AMOUNT_MULTIPLIER)
     val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
   }
 
