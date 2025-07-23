@@ -1,6 +1,7 @@
 package com.alar.rinha2025.payment_gateway
 
 import com.alar.rinha2025.payment_gateway.config.AppConfig
+import com.alar.rinha2025.payment_gateway.config.AppResources
 import com.alar.rinha2025.payment_gateway.setup.TestContainerSetup
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
@@ -16,6 +17,7 @@ import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -48,8 +50,13 @@ class TestMainVerticle {
     }
   }
 
+  private lateinit var server: MockWebServer
   @BeforeEach
   fun setUp(vertx: Vertx, testContext: VertxTestContext) {
+    server = MockWebServer()
+    server.start(9000)
+
+    AppResources.init(vertx)
     connection.createStatement().use { statement ->
       statement.execute(
         "TRUNCATE TABLE payments".trimIndent()
@@ -62,11 +69,15 @@ class TestMainVerticle {
 
   }
 
+  @AfterEach
+  fun tearDown(){
+    server.close()
+    AppResources.destroy().await()
+  }
+
   @Test
   fun test_payment(vertx: Vertx, testContext: VertxTestContext) {
 
-    val server = MockWebServer()
-    server.start(9000)
     server.enqueue(
       MockResponse.Builder()
         .code(200)
@@ -103,7 +114,6 @@ class TestMainVerticle {
               assertThat(rs.getString("requestedAt")).isNotNull()
             }
           testContext.completeNow()
-          server.close();
         }
       }
   }
@@ -111,8 +121,6 @@ class TestMainVerticle {
   @Test
   fun test_summary_after_payments(vertx: Vertx, testContext: VertxTestContext) {
 
-    val server = MockWebServer()
-    server.start(9000)
     server.enqueue(MockResponse.Builder().code(200).build())
     server.enqueue(MockResponse.Builder().code(200).build())
     server.enqueue(MockResponse.Builder().code(200).build())
@@ -159,7 +167,6 @@ class TestMainVerticle {
 
 
           testContext.completeNow()
-          server.close()
         }
       }
 
