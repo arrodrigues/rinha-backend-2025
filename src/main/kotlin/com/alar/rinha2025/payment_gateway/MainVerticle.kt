@@ -63,16 +63,15 @@ class MainVerticle : VerticleBase() {
               ), requestedAt, fallback
             )
           })
-          .onComplete({ ar ->
-            if (ar.succeeded()) {
-              context.response().statusCode = 200
-              context.response().end() // End response here
-            } else {
-              logger.error("Failed to insert payment into DB: ${ar.cause().message}", ar.cause())
-              context.response().statusCode = 500
-              context.response().end("Internal Server Error: Database insertion failed.")
-            }
-          })
+          .onSuccess {
+            context.response().statusCode = 200
+            context.response().end()
+          }
+          .onFailure { ex ->
+            logger.error("Failed to insert payment into DB: ${ex.cause?.message}", ex.cause)
+            context.response().statusCode = 500
+            context.response().end("Internal Server Error: Database insertion failed.")
+          }
 
       }
 
@@ -84,23 +83,23 @@ class MainVerticle : VerticleBase() {
         val paramTo: String? = request.getParam("to")
 
         val from: LocalDateTime =
-          if (paramFrom != null) ZonedDateTime.parse(paramFrom, isoFormatter).toLocalDateTime() else LocalDateTime.MIN
+          if (paramFrom != null) ZonedDateTime.parse(paramFrom, isoFormatter)
+            .toLocalDateTime() else LocalDateTime.MIN
         val to: LocalDateTime =
           if (paramTo != null) ZonedDateTime.parse(paramTo, isoFormatter).toLocalDateTime() else LocalDateTime.MAX
 
         AppResources.Repositories
           .paymentRepository
           .getSummary(from, to)
-          .onComplete { ar ->
-            if (ar.succeeded()) {
-              context.response().statusCode = 200
-              context.response().putHeader("content-type", "application/json")
-              context.response().end(ar.result().toJson())
-            } else {
-              logger.error("Failed to get payment summary from DB: ${ar.cause().message}", ar.cause())
-              context.response().statusCode = 500
-              context.response().end("Internal Server Error: Could not retrieve payment summary.")
-            }
+          .onSuccess { resp ->
+            context.response().statusCode = 200
+            context.response().putHeader("content-type", "application/json")
+            context.response().end(resp.toJson())
+          }
+          .onFailure { ex ->
+            logger.error("Failed to get payment summary from DB: ${ex.cause?.message}", ex)
+            context.response().statusCode = 500
+            context.response().end("Internal Server Error: Could not retrieve payment summary.")
           }
       }
 
