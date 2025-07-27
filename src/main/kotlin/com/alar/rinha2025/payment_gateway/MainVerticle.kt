@@ -86,7 +86,8 @@ class MainVerticle : VerticleBase() {
                 }
               }
           }
-          .onFailure {
+          .onFailure { error ->
+            logger.error("Failed to send request to payment processor: ${error.message}", error)
             context.response().statusCode = 500
             context.end()
           }

@@ -9,7 +9,7 @@ class TestContainerSetup {
   companion object {
 
     private val compose: ComposeContainer =
-      ComposeContainer(File("docker-compose.yml"))
+      ComposeContainer(File("dev/docker-compose-dev.yml"))
         .apply {
           waitingFor("db", Wait.forHealthcheck())
         }
