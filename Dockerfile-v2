@@ -1,0 +1,11 @@
+# V2
+FROM maven:3-eclipse-temurin-21-alpine AS build
+WORKDIR /project
+COPY . .
+RUN mvn package -DskipTests --no-transfer-progress \
+    && rm -rf ~/.m2/repository
+
+FROM eclipse-temurin:21.0.2_13-jre-alpine
+WORKDIR /project
+COPY --from=build /project/target/*-fat.jar app.jar
+ENTRYPOINT ["java","-jar","app.jar"]
