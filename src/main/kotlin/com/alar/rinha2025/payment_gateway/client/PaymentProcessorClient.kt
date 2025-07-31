@@ -25,14 +25,14 @@ class PaymentProcessorClient(private val vertx: Vertx) {
 
 
   fun makePayment(reqObject: JsonObject): Future<HttpResponse<Buffer>> {
-    return paymentProcessorRequest.sendJson(reqObject).onSuccess { response ->
-      response.headers().add("fallback",if (randomnessFallback.getAndIncrement()%2==0 ) "false"  else "true")
-      logger.info("Payment processed successfully. Status code: ${response.statusCode()}")
-    }
-    .onFailure { error ->
-      logger.error("Payment processing failed: ${error.message}")
-    }
+    return paymentProcessorRequest.sendJson(reqObject)
+      .onFailure { error ->
+        logger.error("Payment processing failed: ${error.message}")
+      }
+      .map { response ->
+        response.headers().add("fallback", if (randomnessFallback.getAndIncrement() % 2 == 0) "false" else "true")
+        logger.info("Payment processed successfully. Status code: ${response.statusCode()}")
+        response
+      }
   }
-
-
 }
