@@ -1,5 +1,6 @@
 package com.alar.rinha2025.payment_gateway.client
 
+import com.alar.rinha2025.payment_gateway.MainVerticle
 import com.alar.rinha2025.payment_gateway.config.AppConfig
 import io.vertx.core.Future
 import io.vertx.core.Vertx
@@ -27,7 +28,7 @@ class PaymentProcessorClient(private val vertx: Vertx) {
   fun makePayment(reqObject: JsonObject): Future<HttpResponse<Buffer>> {
     return paymentProcessorRequest.sendJson(reqObject)
       .onFailure { error ->
-        logger.error("Payment processing failed: ${error.message}")
+        MainVerticle.Companion.logger.error("Failed to send request to payment processor: ${error.message}", error)
       }
       .map { response ->
         response.headers().add("fallback", if (randomnessFallback.getAndIncrement() % 2 == 0) "false" else "true")
