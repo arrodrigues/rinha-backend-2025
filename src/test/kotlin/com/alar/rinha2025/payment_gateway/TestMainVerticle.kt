@@ -162,8 +162,12 @@ class TestMainVerticle {
           val bodyAsJsonObject: JsonObject = response!!.bodyAsJsonObject()
 
           val defaultPaymentProcessor = bodyAsJsonObject.get<JsonObject>("default")
-          assertThat(defaultPaymentProcessor.getInteger("totalRequests")).isEqualTo(3)
-          assertThat(defaultPaymentProcessor.getDouble("totalAmount")).isEqualTo(1846627037.07)
+          assertThat(defaultPaymentProcessor.getInteger("totalRequests")).isEqualTo(1)
+          assertThat(defaultPaymentProcessor.getDouble("totalAmount")).isEqualTo(615542345.99)
+
+          val fallbackPaymentProcessor = bodyAsJsonObject.get<JsonObject>("fallback")
+          assertThat(fallbackPaymentProcessor.getInteger("totalRequests")).isEqualTo(2)
+          assertThat(fallbackPaymentProcessor.getDouble("totalAmount")).isEqualTo(1231084691.08)
 
 
           testContext.completeNow()

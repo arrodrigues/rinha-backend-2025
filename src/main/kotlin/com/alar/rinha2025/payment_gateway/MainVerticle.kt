@@ -49,10 +49,10 @@ class MainVerticle : VerticleBase() {
         AppResources
           .Clients.paymentProcessorClient
           .makePayment(reqObject)
-          .compose({ _: HttpResponse<Buffer>? ->
+          .compose({ resp: HttpResponse<Buffer>? ->
             //todo: leave the body as empty as possible
             //todo: get from payment process circuit breaker if it was executed on default or fallback
-            val fallback = false
+            val fallback = resp?.getHeader("fallback") == "true"
             AppResources.Repositories.paymentRepository.savePayment(
               Payment(
                 UUID.fromString(correlationId), BigDecimal(bodyAsJson.getString("amount"))
