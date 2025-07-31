@@ -10,9 +10,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.client.HttpRequest
 import io.vertx.ext.web.client.HttpResponse
-import io.vertx.ext.web.client.WebClient
 import io.vertx.ext.web.handler.BodyHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -34,9 +32,6 @@ class MainVerticle : VerticleBase() {
 
     val router = Router.router(vertx)
 
-    val paymentsProcessorUri = AppConfig.getDefaultPaymentProcessorUri()
-    val paymentProcessorRequest: HttpRequest<Buffer> = WebClient.create(vertx)!!.postAbs(paymentsProcessorUri)
-
     router.route().handler(BodyHandler.create())
 
     router
@@ -47,10 +42,13 @@ class MainVerticle : VerticleBase() {
         val correlationId = bodyAsJson.getString("correlationId")
         val requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
         val reqObject = JsonObject()
+        val amount = bodyAsJson.getDouble("amount")
         reqObject.put("correlationId", correlationId)
-        reqObject.put("amount", bodyAsJson.getDouble("amount"))
-        paymentProcessorRequest
-          .sendJson(reqObject)
+        reqObject.put("amount", amount)
+
+        AppResources
+          .Clients.paymentProcessorClient
+          .makePayment(reqObject)
           .compose({ _: HttpResponse<Buffer>? ->
             //todo: leave the body as empty as possible
             //todo: get from payment process circuit breaker if it was executed on default or fallback
