@@ -1,0 +1,70 @@
+package com.alar.rinha2025.payment_gateway.config;
+
+import com.alar.rinha2025.payment_gateway.client.PaymentProcessorClient
+import com.alar.rinha2025.payment_gateway.client.repository.PaymentRepository
+import com.alar.rinha2025.payment_gateway.config.AppResources.Repositories.pgPool
+import io.vertx.core.Future
+import io.vertx.core.Vertx
+import io.vertx.core.buffer.Buffer
+import io.vertx.ext.web.client.HttpRequest
+import io.vertx.ext.web.client.WebClient
+import io.vertx.pgclient.PgBuilder
+import io.vertx.pgclient.PgConnectOptions
+import io.vertx.sqlclient.Pool
+import io.vertx.sqlclient.PoolOptions
+
+object AppResources {
+
+    fun init(vertx: Vertx) {
+        Repositories.init(vertx)
+        Clients.init(vertx)
+    }
+
+  fun destroy(): Future<Void> {
+      // todo: destroy Client also and return the futures combined
+    return Repositories.destroy()
+  }
+
+    object Repositories {
+        lateinit var pgPool: Pool
+        lateinit var paymentRepository: PaymentRepository
+        fun init(vertx: Vertx) {
+            pgPool =
+                PgBuilder
+                    .pool()
+                    .with(PoolOptions().setMaxSize(10))
+                    .connectingTo(createPgConnectionOptions())
+                    .using(vertx).build()
+
+            paymentRepository = PaymentRepository(pgPool)
+        }
+
+        fun destroy(): Future<Void> {
+            return pgPool.close()
+        }
+    }
+
+    object Clients {
+        lateinit var paymentProcessorClient: PaymentProcessorClient
+        fun init(vertx: Vertx){
+            paymentProcessorClient = PaymentProcessorClient(vertx)
+        }
+
+        fun destroy(): Future<Void> {
+            return Future.succeededFuture()
+        }
+    }
+
+    private fun createPgConnectionOptions(): PgConnectOptions {
+        val connectOptions = PgConnectOptions()
+        connectOptions.password = AppConfig.getDbPassword()
+        connectOptions.user = AppConfig.getDbUsername()
+        connectOptions.host = AppConfig.getDbHost()
+        connectOptions.port = AppConfig.getDbPort()
+        connectOptions.database = AppConfig.getDbName()
+        connectOptions.cachePreparedStatements = true
+        return connectOptions
+    }
+
+
+}
