@@ -30,6 +30,9 @@ class MainVerticle : VerticleBase() {
   override fun start(): Future<*> {
     AppResources.init(vertx)
 
+    val client = AppResources.Clients.paymentProcessorClient
+    val repository = AppResources.Repositories.paymentRepository
+
     val router = Router.router(vertx)
 
     router.route().handler(BodyHandler.create())
@@ -39,24 +42,24 @@ class MainVerticle : VerticleBase() {
       .handler { context ->
         val body = context.body()
         val bodyAsJson = body.asJsonObject()
-        val correlationId = bodyAsJson.getString("correlationId")
-        val requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
-        val reqObject = JsonObject()
-        val amount = bodyAsJson.getDouble("amount")
-        reqObject.put("correlationId", correlationId)
-        reqObject.put("amount", amount)
 
-        AppResources
-          .Clients.paymentProcessorClient
+        val correlationId = UUID.fromString(bodyAsJson.getString("correlationId"))
+        val amount = BigDecimal(bodyAsJson.getString("amount"))
+        val requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
+
+        val reqObject = JsonObject()
+          .put("correlationId", correlationId)
+          .put("amount", amount)
+          .put("requestedAt", requestedAt.toString())
+
+        client
           .makePayment(reqObject)
           .compose({ resp: HttpResponse<Buffer>? ->
             //todo: leave the body as empty as possible
             //todo: get from payment process circuit breaker if it was executed on default or fallback
             val fallback = resp?.getHeader("fallback") == "true"
-            AppResources.Repositories.paymentRepository.savePayment(
-              Payment(
-                UUID.fromString(correlationId), BigDecimal(bodyAsJson.getString("amount"))
-              ), requestedAt, fallback
+            repository.savePayment(
+              Payment(correlationId, amount), requestedAt, fallback
             )
           })
           .onSuccess {
@@ -64,7 +67,7 @@ class MainVerticle : VerticleBase() {
             context.response().end()
           }
           .onFailure { ex ->
-            logger.error("Failed to insert payment into DB: ${ex.cause?.message}", ex.cause)
+            logger.error("Failed to insert payment into DB: ${ex.cause?.message}", ex)
             context.response().statusCode = 500
             context.response().end("Internal Server Error: Database insertion failed.")
           }
@@ -84,8 +87,7 @@ class MainVerticle : VerticleBase() {
         val to: LocalDateTime =
           if (paramTo != null) ZonedDateTime.parse(paramTo, isoFormatter).toLocalDateTime() else LocalDateTime.MAX
 
-        AppResources.Repositories
-          .paymentRepository
+        repository
           .getSummary(from, to)
           .onSuccess { resp ->
             context.response().statusCode = 200
