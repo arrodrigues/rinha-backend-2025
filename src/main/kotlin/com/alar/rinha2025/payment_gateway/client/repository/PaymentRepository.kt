@@ -19,6 +19,7 @@ class PaymentRepository(val pgPool: Pool) {
         private const val AMOUNT_MULTIPLIER = 1000L
         private val AMOUNT_MULTIPLIER_BIG = BigDecimal(AMOUNT_MULTIPLIER)
         private val logger: Logger = LoggerFactory.getLogger(PaymentRepository::class.java)
+        private val emptySummary = ProcessorSummary(totalRequests = 0, totalAmount = BigDecimal.ZERO)
     }
 
     fun savePayment(payment: Payment, requestedAt: LocalDateTime, fallback: Boolean): Future<Unit> {
@@ -68,7 +69,7 @@ class PaymentRepository(val pgPool: Pool) {
                             default = ProcessorSummary(count, totalAmountDouble)
                         }
                     }
-                    Future<PaymentSummary>.succeededFuture(PaymentSummary(default, fallback))
+                    Future<PaymentSummary>.succeededFuture(PaymentSummary(default ?: emptySummary, fallback ?: emptySummary))
                 }
         }
 
