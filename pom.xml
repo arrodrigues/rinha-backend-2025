@@ -24,6 +24,7 @@
     <testcontainers.version>1.20.2</testcontainers.version>
     <logback-classic.version>1.5.18</logback-classic.version>
     <postgresql-driver.version>42.7.7</postgresql-driver.version>
+    <jackson-module-kotlin.version>2.18.2</jackson-module-kotlin.version>
   </properties>
 
   <dependencyManagement>
@@ -74,6 +75,12 @@
       <artifactId>logback-classic</artifactId>
       <version>${logback-classic.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-kotlin</artifactId>
+      <version>${jackson-module-kotlin.version}</version>
+    </dependency>
+
 
     <dependency>
       <groupId>io.vertx</groupId>
