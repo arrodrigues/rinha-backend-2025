@@ -8,6 +8,6 @@ data class ProcessorSummary(
 )
 
 data class PaymentSummary(
-  val default: ProcessorSummary?,
-  val fallback: ProcessorSummary?
+  val default: ProcessorSummary,
+  val fallback: ProcessorSummary
 )

@@ -35,7 +35,7 @@ services:
       - SERVER_PORT=8080
       - PAYMENTS_PROCESSOR_DEFAULT_URI=http://payment-processor-default:8080/payments
       - PAYMENTS_PROCESSOR_FALLBACK_URI=http://payment-processor-fallback:8080/payments
-      - JAVA_TOOL_OPTIONS=-Xms140m -Xmx222m
+#      - JAVA_TOOL_OPTIONS=-Xms140m -Xmx222m
     ports:
       - "8081:8080"
     networks:
