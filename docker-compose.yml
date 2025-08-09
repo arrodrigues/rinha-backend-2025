@@ -33,9 +33,9 @@ services:
       - DB_USERNAME=integration_username
       - DB_PASSWORD=integration_pw
       - SERVER_PORT=8080
-      - PAYMENTS_PROCESSOR_DEFAULT_URI=http://payment-processor-default:8080/payments
-      - PAYMENTS_PROCESSOR_FALLBACK_URI=http://payment-processor-fallback:8080/payments
-#      - JAVA_TOOL_OPTIONS=-Xms140m -Xmx222m
+      - PAYMENTS_PROCESSOR_DEFAULT_URI=http://elb:9991/payments
+      - PAYMENTS_PROCESSOR_FALLBACK_URI=http://nonono:9991/payments
+ #     - JAVA_TOOL_OPTIONS=-Xms140m -Xmx222m
     ports:
       - "8081:8080"
     networks:
@@ -66,6 +66,7 @@ services:
       - api02
     networks:
       - backend
+      - payment-processor
 
 
 #  nginx:
