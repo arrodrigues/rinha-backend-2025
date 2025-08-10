@@ -59,6 +59,7 @@ services:
     image: haproxy:latest
     ports:
       - "9999:9999"
+      - "8404:8404"
     volumes:
       - ./config/haproxy:/usr/local/etc/haproxy
     depends_on:

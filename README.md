@@ -73,3 +73,6 @@ cd rinha-test
 k6 run rinha.js
 ```
 
+- Check HA proxy statistics
+  http://localhost:8404/stats
+
