@@ -20,9 +20,9 @@ class PaymentProcessorClient(private val vertx: Vertx) {
 
   companion object {
     private val logger: Logger = LoggerFactory.getLogger(PaymentProcessorClient::class.java)
-    private val randomnessFallback: AtomicInteger = AtomicInteger()
+    val DEFAULT_SERVER_NAME = "default"
+    val FALLBACK_SERVER_NAME = "fallback"
   }
-
 
 
   fun makePayment(reqObject: JsonObject): Future<HttpResponse<Buffer>> {
@@ -31,8 +31,7 @@ class PaymentProcessorClient(private val vertx: Vertx) {
         MainVerticle.Companion.logger.error("Failed to send request to payment processor: ${error.message}", error)
       }
       .map { response ->
-        response.headers().add("fallback", if (randomnessFallback.getAndIncrement() % 2 == 0) "false" else "true")
-        logger.info("Payment processed successfully. Status code: ${response.statusCode()}")
+        logger.info("Payment processed successfully. Status code: ${response.statusCode()}   Payment Server: ${response.headers()["X-Served-By"]}")
         response
       }
   }

@@ -1,5 +1,6 @@
 package com.alar.rinha2025.payment_gateway
 
+import com.alar.rinha2025.payment_gateway.client.PaymentProcessorClient
 import com.alar.rinha2025.payment_gateway.config.AppConfig
 import com.alar.rinha2025.payment_gateway.config.AppResources
 import com.alar.rinha2025.payment_gateway.domain.Payment
@@ -56,8 +57,7 @@ class MainVerticle : VerticleBase() {
           .makePayment(reqObject)
           .compose({ resp: HttpResponse<Buffer>? ->
             //todo: leave the body as empty as possible
-            //todo: get from payment process circuit breaker if it was executed on default or fallback
-            val fallback = resp?.getHeader("fallback") == "true"
+            val fallback = resp?.getHeader("X-Served-By") == PaymentProcessorClient.FALLBACK_SERVER_NAME
             repository.savePayment(
               Payment(correlationId, amount), requestedAt, fallback
             )
