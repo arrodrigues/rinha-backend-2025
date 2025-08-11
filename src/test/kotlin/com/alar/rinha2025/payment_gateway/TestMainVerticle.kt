@@ -104,6 +104,7 @@ class TestMainVerticle {
           val jsonObject = JsonObject(recordedRequest.body!!.utf8())
           assertThat(jsonObject.get<String>("correlationId")).isEqualTo("4a7901b8-7d26-4d9d-aa19-4dc1c7cf60b3")
           assertThat(jsonObject.get<Double>("amount")).isEqualTo(19.9)
+          assertThat(jsonObject.get<String>("requestedAt")).isNotNull()
 
           connection.createStatement()
             .use { statement ->
@@ -121,9 +122,9 @@ class TestMainVerticle {
   @Test
   fun test_summary_after_payments(vertx: Vertx, testContext: VertxTestContext) {
 
-    server.enqueue(MockResponse.Builder().code(200).build())
-    server.enqueue(MockResponse.Builder().code(200).build())
-    server.enqueue(MockResponse.Builder().code(200).build())
+    server.enqueue(MockResponse.Builder().addHeader("X-Served-By","fallback").code(200).build())
+    server.enqueue(MockResponse.Builder().addHeader("X-Served-By","default").code(200).build())
+    server.enqueue(MockResponse.Builder().addHeader("X-Served-By","fallback").code(200).build())
 
     val req = WebClient.create(vertx).post(AppConfig.getServerPort(), "localhost", "/payments")
 
