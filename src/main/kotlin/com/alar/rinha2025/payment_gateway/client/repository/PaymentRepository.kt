@@ -35,7 +35,7 @@ class PaymentRepository(val pgPool: Pool) {
                 )
                 .execute(Tuple.of(payment.correlationId, amountAsLong, requestedAt, fallback))
                 .onSuccess {
-                    logger.info("Payment saved successfully: {}", payment.correlationId)
+                    logger.debug("Payment saved successfully: {}", payment.correlationId)
                 }
                 .onFailure { error ->
                     logger.error("Failed to save payment {}: {}", payment.correlationId, error.message, error)
@@ -72,6 +72,20 @@ class PaymentRepository(val pgPool: Pool) {
                     Future<PaymentSummary>.succeededFuture(PaymentSummary(default ?: emptySummary, fallback ?: emptySummary))
                 }
         }
+    }
 
+    fun deleteAll(): Future<Unit> {
+        return pgPool.withConnection { connection ->
+            connection
+                .preparedQuery("DELETE FROM payments")
+                .execute()
+                .onSuccess {
+                    logger.debug("All payments deleted successfully")
+                }
+                .onFailure { error ->
+                    logger.error("Failed to delete all payments: {}", error.message, error)
+                }
+                .map { }
+        }
     }
 }
