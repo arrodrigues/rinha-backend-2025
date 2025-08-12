@@ -109,8 +109,15 @@ class MainVerticle : VerticleBase() {
     router.route(HttpMethod.DELETE, "/payments")
       .handler { context ->
         paymentRepository.deleteAll()
-        context.response().statusCode = NO_CONTENT.code()
-        context.response().end()
+          .onSuccess {
+            context.response().statusCode = NO_CONTENT.code()
+            context.response().end()
+          }
+          .onFailure { ex ->
+            logger.error("Failed to delete all payments from DB: ${ex.cause?.message}", ex)
+            context.response().statusCode = INTERNAL_SERVER_ERROR.code()
+            context.response().end("Internal Server Error: Could not delete payments.")
+          }
       }
 
     val port = AppConfig.getServerPort()
