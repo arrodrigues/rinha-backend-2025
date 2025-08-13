@@ -18,18 +18,15 @@ class PaymentProcessorClient(private val vertx: Vertx) {
 
   companion object {
     private val logger: Logger = LoggerFactory.getLogger(PaymentProcessorClient::class.java)
-    val DEFAULT_SERVER_NAME = "default"
-    val FALLBACK_SERVER_NAME = "fallback"
   }
-
 
   fun makePayment(reqObject: JsonObject): Future<HttpResponse<Buffer>> {
     return paymentProcessorRequest.sendJson(reqObject)
       .onFailure { error ->
-        PaymentProcessorClient.logger.error("Failed to send request to payment processor: ${error.message}", error)
+        logger.error("Failed to send request to payment processor: ${error.message}", error)
       }
       .map { response ->
-        logger.info("Payment processed successfully. Status code: ${response.statusCode()}   Payment Server: ${response.headers()["X-Served-By"]}")
+        logger.debug("Payment processed successfully. Status code: ${response.statusCode()}   Payment Server: ${response.headers()["X-Served-By"]}")
         response
       }
   }

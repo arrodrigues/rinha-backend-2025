@@ -1,10 +1,12 @@
 package com.alar.rinha2025.payment_gateway
 
-import com.alar.rinha2025.payment_gateway.client.PaymentProcessorClient
 import com.alar.rinha2025.payment_gateway.config.AppConfig
 import com.alar.rinha2025.payment_gateway.config.AppResources
+import com.alar.rinha2025.payment_gateway.config.AppResources.Clients.paymentProcessorClient
+import com.alar.rinha2025.payment_gateway.config.AppResources.Repositories.paymentRepository
 import com.alar.rinha2025.payment_gateway.domain.Payment
 import com.alar.rinha2025.payment_gateway.extensions.toJson
+import io.netty.handler.codec.http.HttpResponseStatus.*
 import io.vertx.core.Future
 import io.vertx.core.VerticleBase
 import io.vertx.core.buffer.Buffer
@@ -26,13 +28,13 @@ class MainVerticle : VerticleBase() {
   companion object {
     val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)
     val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
+
+    const val HEADER_SERVER_NAME = "X-Served-By"
+    const val SERVER_NAME_DEFAULT = "default"
   }
 
   override fun start(): Future<*> {
     AppResources.init(vertx)
-
-    val client = AppResources.Clients.paymentProcessorClient
-    val repository = AppResources.Repositories.paymentRepository
 
     val router = Router.router(vertx)
 
@@ -53,22 +55,24 @@ class MainVerticle : VerticleBase() {
           .put("amount", amount)
           .put("requestedAt", requestedAt.toString())
 
-        client
+        paymentProcessorClient
           .makePayment(reqObject)
-          .compose({ resp: HttpResponse<Buffer>? ->
-            //todo: leave the body as empty as possible
-            val fallback = resp?.getHeader("X-Served-By") == PaymentProcessorClient.FALLBACK_SERVER_NAME
-            repository.savePayment(
-              Payment(correlationId, amount), requestedAt, fallback
-            )
-          })
-          .onSuccess {
-            context.response().statusCode = 200
+          .compose { resp: HttpResponse<Buffer>? ->
+            if (resp?.statusCode() == OK.code()) {
+              Future.succeededFuture(resp)
+            } else Future.failedFuture("Payment processing failed status=${resp?.statusCode()}")
+          }
+          .onSuccess { resp: HttpResponse<Buffer> ->
+            val serverName = resp.getHeader(HEADER_SERVER_NAME)
+            logger.debug("Payment processed server={}, status={}", serverName, resp.statusCode())
+            save(correlationId, amount, requestedAt, serverName)
+
+            context.response().statusCode = OK.code()
             context.response().end()
           }
           .onFailure { ex ->
             logger.error("Failed to insert payment into DB: ${ex.cause?.message}", ex)
-            context.response().statusCode = 500
+            context.response().statusCode = INTERNAL_SERVER_ERROR.code()
             context.response().end("Internal Server Error: Database insertion failed.")
           }
 
@@ -87,20 +91,34 @@ class MainVerticle : VerticleBase() {
         val to: LocalDateTime =
           if (paramTo != null) ZonedDateTime.parse(paramTo, isoFormatter).toLocalDateTime() else LocalDateTime.MAX
 
-        repository
+        paymentRepository
           .getSummary(from, to)
           .onSuccess { resp ->
-            context.response().statusCode = 200
+            context.response().statusCode = OK.code()
             context.response().putHeader("content-type", "application/json")
             context.response().end(resp.toJson())
           }
           .onFailure { ex ->
             logger.error("Failed to get payment summary from DB: ${ex.cause?.message}", ex)
-            context.response().statusCode = 500
+            context.response().statusCode = INTERNAL_SERVER_ERROR.code()
             context.response().end("Internal Server Error: Could not retrieve payment summary.")
           }
       }
 
+
+    router.route(HttpMethod.DELETE, "/payments")
+      .handler { context ->
+        paymentRepository.deleteAll()
+          .onSuccess {
+            context.response().statusCode = NO_CONTENT.code()
+            context.response().end()
+          }
+          .onFailure { ex ->
+            logger.error("Failed to delete all payments from DB: ${ex.cause?.message}", ex)
+            context.response().statusCode = INTERNAL_SERVER_ERROR.code()
+            context.response().end("Internal Server Error: Could not delete payments.")
+          }
+      }
 
     val port = AppConfig.getServerPort()
     return vertx.createHttpServer()
@@ -109,4 +127,15 @@ class MainVerticle : VerticleBase() {
         logger.info("HTTP server started on port $port")
       }
   }
+
+  private fun save(
+    correlationId: UUID,
+    amount: BigDecimal,
+    requestedAt: LocalDateTime,
+    serverName: String
+  ): Future<Unit> =
+    paymentRepository.savePayment(
+      Payment(correlationId, amount), requestedAt, fallback = serverName != SERVER_NAME_DEFAULT
+    )
+
 }

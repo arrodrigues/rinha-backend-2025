@@ -2,12 +2,8 @@ package com.alar.rinha2025.payment_gateway.config;
 
 import com.alar.rinha2025.payment_gateway.client.PaymentProcessorClient
 import com.alar.rinha2025.payment_gateway.client.repository.PaymentRepository
-import com.alar.rinha2025.payment_gateway.config.AppResources.Repositories.pgPool
 import io.vertx.core.Future
 import io.vertx.core.Vertx
-import io.vertx.core.buffer.Buffer
-import io.vertx.ext.web.client.HttpRequest
-import io.vertx.ext.web.client.WebClient
 import io.vertx.pgclient.PgBuilder
 import io.vertx.pgclient.PgConnectOptions
 import io.vertx.sqlclient.Pool

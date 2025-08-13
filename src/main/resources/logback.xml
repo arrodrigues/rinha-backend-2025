@@ -1,60 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-  <!--
-      This Logback configuration file is designed for debugging Vert.x applications.
-      It directs all log output to the console (System.out).
-      The logging level for Vert.x specific components is set to DEBUG or TRACE
-      to provide detailed information, while the root logger is set to INFO
-      to keep general application logs less verbose unless specified.
-  -->
-
-  <!-- CONSOLE Appender -->
-  <!-- Defines an appender that outputs log messages to the console. -->
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <!-- Encoder to format the log messages -->
     <encoder>
-      <!--
-          Pattern for log messages:
-          %d{yyyy-MM-dd HH:mm:ss.SSS}  : Date and time with milliseconds
-          [%thread]                   : Name of the current thread
-          %-5level                    : Log level (e.g., INFO, DEBUG, ERROR) padded to 5 characters
-          %logger{36}                 : Name of the logger (e.g., io.vertx.core.http.impl.HttpServerImpl)
-                                        {36} limits the logger name length for readability
-          - %msg%n                    : The actual log message followed by a new line
-      -->
       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
 
-  <!-- Logger for Vert.x core components -->
-  <!-- Set to DEBUG to see detailed Vert.x internal operations.
-       You can change this to TRACE for even more verbose output,
-       but be aware it can generate a very large amount of logs. -->
   <logger name="io.vertx" level="DEBUG" additivity="false">
     <appender-ref ref="CONSOLE"/>
   </logger>
 
-  <!-- Logger for Netty, which Vert.x uses extensively for networking -->
   <logger name="io.netty" level="DEBUG" additivity="false">
     <appender-ref ref="CONSOLE"/>
   </logger>
 
-  <!-- Logger for specific Vert.x HTTP components (optional, for more granular control) -->
-  <!-- If you want to debug HTTP specific issues, you might set this to TRACE -->
-  <logger name="io.vertx.core.http.impl" level="DEBUG" additivity="false">
-    <appender-ref ref="CONSOLE"/>
-  </logger>
-
-  <!-- Logger for Vert.x Web (if you are using vertx-web) -->
-  <logger name="io.vertx.ext.web" level="DEBUG" additivity="false">
-    <appender-ref ref="CONSOLE"/>
-  </logger>
-
-  <!-- ROOT Logger -->
-  <!-- Defines the default logging level for all loggers that are not explicitly configured.
-       Messages from these loggers will also go to the CONSOLE appender. -->
-  <root level="DEBUG">
+  <root level="INFO">
     <appender-ref ref="CONSOLE"/>
   </root>
 
