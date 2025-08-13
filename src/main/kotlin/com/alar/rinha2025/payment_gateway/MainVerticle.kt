@@ -59,14 +59,12 @@ class MainVerticle : VerticleBase() {
           .makePayment(reqObject)
           .compose { resp: HttpResponse<Buffer>? ->
             if (resp?.statusCode() == OK.code()) {
-              Future.succeededFuture(resp)
+              val serverName = resp.getHeader(HEADER_SERVER_NAME)
+              logger.debug("Payment processed by server={}, status={}", serverName, resp.statusCode())
+              save(correlationId, amount, requestedAt, serverName)
             } else Future.failedFuture("Payment processing failed status=${resp?.statusCode()}")
           }
-          .onSuccess { resp: HttpResponse<Buffer> ->
-            val serverName = resp.getHeader(HEADER_SERVER_NAME)
-            logger.debug("Payment processed server={}, status={}", serverName, resp.statusCode())
-            save(correlationId, amount, requestedAt, serverName)
-
+          .onSuccess {
             context.response().statusCode = OK.code()
             context.response().end()
           }

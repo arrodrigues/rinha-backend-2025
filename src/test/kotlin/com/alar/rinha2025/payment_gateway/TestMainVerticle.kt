@@ -51,6 +51,7 @@ class TestMainVerticle {
   }
 
   private lateinit var server: MockWebServer
+
   @BeforeEach
   fun setUp(vertx: Vertx, testContext: VertxTestContext) {
     server = MockWebServer()
@@ -70,7 +71,7 @@ class TestMainVerticle {
   }
 
   @AfterEach
-  fun tearDown(){
+  fun tearDown() {
     server.close()
     AppResources.destroy().await()
   }
@@ -80,6 +81,7 @@ class TestMainVerticle {
 
     server.enqueue(
       MockResponse.Builder()
+        .addHeader("X-Served-By", "default")
         .code(200)
         .body("resp")
         .build()
@@ -108,11 +110,12 @@ class TestMainVerticle {
 
           connection.createStatement()
             .use { statement ->
-              val rs = statement.executeQuery("select correlationId, amount, requestedAt from payments")
+              val rs = statement.executeQuery("select correlationId, amount, requestedAt, fallback from payments")
               assertThat(rs.next()).isTrue
               assertThat(rs.getString("correlationId")).isEqualTo("4a7901b8-7d26-4d9d-aa19-4dc1c7cf60b3")
               assertThat(rs.getInt("amount")).isEqualTo(19900)
-              assertThat(rs.getString("requestedAt")).isNotNull()
+              assertThat(rs.getString("requestedAt")).isNotNull
+              assertThat(rs.getBoolean("fallback")).isFalse
             }
           testContext.completeNow()
         }
@@ -122,9 +125,9 @@ class TestMainVerticle {
   @Test
   fun test_summary_after_payments(vertx: Vertx, testContext: VertxTestContext) {
 
-    server.enqueue(MockResponse.Builder().addHeader("X-Served-By","fallback").code(200).build())
-    server.enqueue(MockResponse.Builder().addHeader("X-Served-By","default").code(200).build())
-    server.enqueue(MockResponse.Builder().addHeader("X-Served-By","fallback").code(200).build())
+    server.enqueue(MockResponse.Builder().addHeader("X-Served-By", "fallback").code(200).build())
+    server.enqueue(MockResponse.Builder().addHeader("X-Served-By", "default").code(200).build())
+    server.enqueue(MockResponse.Builder().addHeader("X-Served-By", "fallback").code(200).build())
 
     val req = WebClient.create(vertx).post(AppConfig.getServerPort(), "localhost", "/payments")
 
