@@ -22,7 +22,7 @@ class PaymentRepository(val pgPool: Pool) {
         private val emptySummary = ProcessorSummary(totalRequests = 0, totalAmount = BigDecimal.ZERO)
     }
 
-    fun savePayment(payment: Payment, requestedAt: LocalDateTime, fallback: Boolean): Future<Unit> {
+    fun savePayment(payment: Payment, fallback: Boolean): Future<Unit> {
         val amountAsLong = payment.amount.multiply(AMOUNT_MULTIPLIER_BIG).toLong()
         return pgPool.withConnection { connection ->
 
@@ -33,7 +33,7 @@ class PaymentRepository(val pgPool: Pool) {
           VALUES ($1, $2, $3, $4)
           """
                 )
-                .execute(Tuple.of(payment.correlationId, amountAsLong, requestedAt, fallback))
+                .execute(Tuple.of(payment.correlationId, amountAsLong, payment.requestedAt, fallback))
                 .onSuccess {
                     logger.debug("Payment saved successfully: {}", payment.correlationId)
                 }

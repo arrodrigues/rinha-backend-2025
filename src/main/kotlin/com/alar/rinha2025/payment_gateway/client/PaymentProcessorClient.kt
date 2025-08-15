@@ -1,10 +1,10 @@
 package com.alar.rinha2025.payment_gateway.client
 
 import com.alar.rinha2025.payment_gateway.config.AppConfig
+import com.alar.rinha2025.payment_gateway.domain.Payment
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
-import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.client.HttpRequest
 import io.vertx.ext.web.client.HttpResponse
 import io.vertx.ext.web.client.WebClient
@@ -20,8 +20,8 @@ class PaymentProcessorClient(private val vertx: Vertx) {
     private val logger: Logger = LoggerFactory.getLogger(PaymentProcessorClient::class.java)
   }
 
-  fun makePayment(reqObject: JsonObject): Future<HttpResponse<Buffer>> {
-    return paymentProcessorRequest.sendJson(reqObject)
+  fun makePayment(payment: Payment): Future<HttpResponse<Buffer>> {
+    return paymentProcessorRequest.sendJson(payment.toJsonObject())
       .onFailure { error ->
         logger.error("Failed to send request to payment processor: ${error.message}", error)
       }

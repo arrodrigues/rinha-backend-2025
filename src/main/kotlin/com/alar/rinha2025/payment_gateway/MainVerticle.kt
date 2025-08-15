@@ -46,22 +46,19 @@ class MainVerticle : VerticleBase() {
         val body = context.body()
         val bodyAsJson = body.asJsonObject()
 
-        val correlationId = UUID.fromString(bodyAsJson.getString("correlationId"))
-        val amount = BigDecimal(bodyAsJson.getString("amount"))
-        val requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
-
-        val reqObject = JsonObject()
-          .put("correlationId", correlationId)
-          .put("amount", amount)
-          .put("requestedAt", requestedAt.toString())
+        val payment = Payment(
+          correlationId = UUID.fromString(bodyAsJson.getString("correlationId")),
+          amount = BigDecimal(bodyAsJson.getString("amount")),
+          requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC).toString()
+        )
 
         paymentProcessorClient
-          .makePayment(reqObject)
+          .makePayment(payment)
           .compose { resp: HttpResponse<Buffer>? ->
             if (resp?.statusCode() == OK.code()) {
               val serverName = resp.getHeader(HEADER_SERVER_NAME)
               logger.debug("Payment processed by server={}, status={}", serverName, resp.statusCode())
-              save(correlationId, amount, requestedAt, serverName)
+              save(payment, serverName)
             } else Future.failedFuture("Payment processing failed status=${resp?.statusCode()}")
           }
           .onSuccess {
@@ -127,13 +124,11 @@ class MainVerticle : VerticleBase() {
   }
 
   private fun save(
-    correlationId: UUID,
-    amount: BigDecimal,
-    requestedAt: LocalDateTime,
+    payment: Payment,
     serverName: String
   ): Future<Unit> =
     paymentRepository.savePayment(
-      Payment(correlationId, amount), requestedAt, fallback = serverName != SERVER_NAME_DEFAULT
+     payment, fallback = serverName != SERVER_NAME_DEFAULT
     )
 
 }
