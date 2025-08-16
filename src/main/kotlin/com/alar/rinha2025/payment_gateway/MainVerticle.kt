@@ -2,17 +2,14 @@ package com.alar.rinha2025.payment_gateway
 
 import com.alar.rinha2025.payment_gateway.config.AppConfig
 import com.alar.rinha2025.payment_gateway.config.AppResources
-import com.alar.rinha2025.payment_gateway.config.AppResources.Clients.paymentProcessorClient
 import com.alar.rinha2025.payment_gateway.config.AppResources.Repositories.paymentRepository
 import com.alar.rinha2025.payment_gateway.domain.Payment
 import com.alar.rinha2025.payment_gateway.extensions.toJson
 import io.netty.handler.codec.http.HttpResponseStatus.*
 import io.vertx.core.Future
 import io.vertx.core.VerticleBase
-import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.client.HttpResponse
 import io.vertx.ext.web.handler.BodyHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,6 +17,7 @@ import java.math.BigDecimal
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.*
+import java.util.concurrent.LinkedBlockingDeque
 
 
 class MainVerticle : VerticleBase() {
@@ -29,13 +27,16 @@ class MainVerticle : VerticleBase() {
     val isoFormatter: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.of("UTC"))
 
     const val HEADER_SERVER_NAME = "X-Served-By"
-    const val SERVER_NAME_DEFAULT = "default"
+    val paymentQueue = LinkedBlockingDeque<Payment>(1000)
   }
 
   override fun start(): Future<*> {
     AppResources.init(vertx)
 
     val router = Router.router(vertx)
+
+    // Deploy the queue consumer verticle
+    vertx.deployVerticle(PaymentQueueConsumer(paymentQueue))
 
     router.route().handler(BodyHandler.create())
 
@@ -51,24 +52,9 @@ class MainVerticle : VerticleBase() {
           requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
         )
 
-        paymentProcessorClient
-          .makePayment(payment)
-          .compose { resp: HttpResponse<Buffer>? ->
-            if (resp?.statusCode() == OK.code()) {
-              val serverName = resp.getHeader(HEADER_SERVER_NAME)
-              logger.debug("Payment processed by server={}, status={}", serverName, resp.statusCode())
-              save(payment, serverName)
-            } else Future.failedFuture("Payment processing failed status=${resp?.statusCode()}")
-          }
-          .onSuccess {
-            context.response().statusCode = OK.code()
-            context.response().end()
-          }
-          .onFailure { ex ->
-            logger.debug("Failed to insert payment into DB: ${ex.cause?.message}", ex)
-            context.response().statusCode = INTERNAL_SERVER_ERROR.code()
-            context.response().end("Internal Server Error: Database insertion failed.")
-          }
+        val enqueued = paymentQueue.offer(payment)
+        context.response().statusCode = if (enqueued) ACCEPTED.code() else SERVICE_UNAVAILABLE.code()
+        context.response().end()
 
       }
 
@@ -121,13 +107,5 @@ class MainVerticle : VerticleBase() {
         logger.info("HTTP server started on port $port")
       }
   }
-
-  private fun save(
-    payment: Payment,
-    serverName: String
-  ): Future<Unit> =
-    paymentRepository.savePayment(
-     payment, fallback = serverName != SERVER_NAME_DEFAULT
-    )
 
 }
