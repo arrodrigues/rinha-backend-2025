@@ -98,6 +98,7 @@ class TestMainVerticle {
       .compose<Buffer> { response: HttpResponse<Buffer>? -> Future.succeededFuture<Buffer>(response!!.body()) }
       .onFailure { t -> testContext.failNow(t) }
       .onSuccess { response ->
+        Thread.sleep(200)
         testContext.verify {
           val recordedRequest = server.takeRequest()
           assertThat(recordedRequest.method).isEqualTo("POST")
@@ -150,6 +151,7 @@ class TestMainVerticle {
         )
     )
       .compose {
+        Thread.sleep(500)
         WebClient.create(vertx).get(AppConfig.getServerPort(), "localhost", "/payments-summary")
           .putHeader("Content-Type", "application/json")
           .addQueryParam("from", "2018-07-10T00:00:00.000Z")
