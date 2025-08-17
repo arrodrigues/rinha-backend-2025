@@ -1,4 +1,4 @@
-package com.alar.rinha2025.payment_gateway.config
+package br.com.rinha2025.paymentgateway.config
 
 import io.vertx.core.json.JsonObject
 import java.util.*

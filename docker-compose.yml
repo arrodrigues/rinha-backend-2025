@@ -36,7 +36,6 @@ services:
       - SERVER_PORT=8080
       - PAYMENTS_PROCESSOR_DEFAULT_URI=http://elb:9991/payments
       - PAYMENTS_PROCESSOR_FALLBACK_URI=http://nonono:9991/payments
-    #     - JAVA_TOOL_OPTIONS=-Xms140m -Xmx222m
     ports:
       - "8081:8080"
     networks:

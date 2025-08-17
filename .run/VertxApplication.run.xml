@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="VertxApplication" type="Application" factoryName="Application" nameIsGenerated="true">
     <envs>
-      <env name="main.verticle" value="com.alar.rinha2025.payment_gateway.MainVerticle" />
+      <env name="main.verticle" value="br.com.rinha2025.paymentgateway.MainVerticle" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="io.vertx.launcher.application.VertxApplication" />
     <module name="payment-gateway" />
-    <option name="PROGRAM_PARAMETERS" value="com.alar.rinha2025.payment_gateway.MainVerticle -conf &quot;{\&quot;payments-processor-uri\&quot;:\&quot;http://localhost:9999/payments\&quot;}&quot;" />
+    <option name="PROGRAM_PARAMETERS" value="br.com.rinha2025.paymentgateway.MainVerticle -conf &quot;{\&quot;payments-processor-uri\&quot;:\&quot;http://localhost:9999/payments\&quot;}&quot;" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="io.vertx.launcher.application.*" />

@@ -1,4 +1,4 @@
-package com.alar.rinha2025.payment_gateway.domain
+package br.com.rinha2025.paymentgateway.domain
 
 import io.vertx.core.json.JsonObject
 import java.math.BigDecimal

@@ -1,13 +1,12 @@
-package com.alar.rinha2025.payment_gateway
+package br.com.rinha2025.paymentgateway
 
-import com.alar.rinha2025.payment_gateway.config.AppConfig
-import com.alar.rinha2025.payment_gateway.config.AppResources
-import com.alar.rinha2025.payment_gateway.config.AppResources.Repositories.paymentRepository
-import com.alar.rinha2025.payment_gateway.domain.Payment
-import com.alar.rinha2025.payment_gateway.extensions.toJson
+import br.com.rinha2025.paymentgateway.config.AppConfig
+import br.com.rinha2025.paymentgateway.config.AppResources
+import br.com.rinha2025.paymentgateway.config.AppResources.Repositories.paymentRepository
+import br.com.rinha2025.paymentgateway.domain.Payment
+import br.com.rinha2025.paymentgateway.extensions.toJson
 import io.netty.handler.codec.http.HttpResponseStatus.*
 import io.vertx.core.Future
-import io.vertx.core.VerticleBase
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
@@ -20,7 +19,7 @@ import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
 
 
-class MainVerticle : VerticleBase() {
+class MainVerticle : io.vertx.core.VerticleBase() {
 
   companion object {
     val logger: Logger = LoggerFactory.getLogger(MainVerticle::class.java)

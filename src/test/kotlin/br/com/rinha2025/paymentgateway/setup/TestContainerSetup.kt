@@ -1,4 +1,4 @@
-package com.alar.rinha2025.payment_gateway.setup
+package br.com.rinha2025.paymentgateway.setup
 
 import org.testcontainers.containers.ComposeContainer
 import org.testcontainers.containers.wait.strategy.Wait

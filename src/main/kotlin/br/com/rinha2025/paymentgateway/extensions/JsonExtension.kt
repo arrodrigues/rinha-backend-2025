@@ -1,4 +1,4 @@
-package com.alar.rinha2025.payment_gateway.extensions
+package br.com.rinha2025.paymentgateway.extensions
 
 import io.vertx.core.json.Json.encode
 import io.vertx.core.json.JsonObject

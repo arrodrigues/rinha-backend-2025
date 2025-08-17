@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.alar.rinha2025</groupId>
+  <groupId>br.com.rinha2025</groupId>
   <artifactId>payment-gateway</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
@@ -19,7 +19,7 @@
     <junit-jupiter.version>5.9.1</junit-jupiter.version>
     <okhttp.version>5.1.0</okhttp.version>
     <assertj-core.version>3.27.3</assertj-core.version>
-    <main.verticle>com.alar.rinha2025.payment_gateway.MainVerticle</main.verticle>
+    <main.verticle>br.com.rinha2025.paymentgateway.MainVerticle</main.verticle>
     <launcher.class>io.vertx.launcher.application.VertxApplication</launcher.class>
     <testcontainers.version>1.20.2</testcontainers.version>
     <logback-classic.version>1.5.18</logback-classic.version>

@@ -1,10 +1,10 @@
-package com.alar.rinha2025.payment_gateway
+package br.com.rinha2025.paymentgateway
 
-import com.alar.rinha2025.payment_gateway.MainVerticle.Companion.HEADER_SERVER_NAME
-import com.alar.rinha2025.payment_gateway.MainVerticle.Companion.logger
-import com.alar.rinha2025.payment_gateway.config.AppResources.Clients.paymentProcessorClient
-import com.alar.rinha2025.payment_gateway.config.AppResources.Repositories.paymentRepository
-import com.alar.rinha2025.payment_gateway.domain.Payment
+import br.com.rinha2025.paymentgateway.MainVerticle.Companion.HEADER_SERVER_NAME
+import br.com.rinha2025.paymentgateway.MainVerticle.Companion.logger
+import br.com.rinha2025.paymentgateway.config.AppResources.Clients.paymentProcessorClient
+import br.com.rinha2025.paymentgateway.config.AppResources.Repositories.paymentRepository
+import br.com.rinha2025.paymentgateway.domain.Payment
 import io.netty.handler.codec.http.HttpResponseStatus.OK
 import io.netty.handler.codec.http.HttpResponseStatus.GATEWAY_TIMEOUT
 import io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR

@@ -1,7 +1,7 @@
-package com.alar.rinha2025.payment_gateway.config;
+package br.com.rinha2025.paymentgateway.config
 
-import com.alar.rinha2025.payment_gateway.client.PaymentProcessorClient
-import com.alar.rinha2025.payment_gateway.client.repository.PaymentRepository
+import br.com.rinha2025.paymentgateway.client.PaymentProcessorClient
+import br.com.rinha2025.paymentgateway.client.repository.PaymentRepository
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.pgclient.PgBuilder

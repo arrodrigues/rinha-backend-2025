@@ -1,8 +1,8 @@
-package com.alar.rinha2025.payment_gateway
+package br.com.rinha2025.paymentgateway
 
-import com.alar.rinha2025.payment_gateway.config.AppConfig
-import com.alar.rinha2025.payment_gateway.config.AppResources
-import com.alar.rinha2025.payment_gateway.setup.TestContainerSetup
+import br.com.rinha2025.paymentgateway.config.AppConfig
+import br.com.rinha2025.paymentgateway.config.AppResources
+import br.com.rinha2025.paymentgateway.setup.TestContainerSetup
 import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
 import io.vertx.core.Vertx
