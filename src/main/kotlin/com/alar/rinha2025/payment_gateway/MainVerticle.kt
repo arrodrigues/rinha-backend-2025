@@ -94,7 +94,7 @@ class MainVerticle : VerticleBase() {
             context.response().end()
           }
           .onFailure { ex ->
-            logger.error("Failed to delete all payments from DB: ${ex.cause?.message}", ex)
+            logger.debug("Failed to delete all payments from DB: ${ex.cause?.message}", ex)
             context.response().statusCode = INTERNAL_SERVER_ERROR.code()
             context.response().end("Internal Server Error: Could not delete payments.")
           }
