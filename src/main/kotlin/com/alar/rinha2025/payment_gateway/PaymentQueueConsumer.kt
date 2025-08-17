@@ -64,7 +64,7 @@ class PaymentQueueConsumer(private val paymentQueue: Deque<Payment>) : AbstractV
             logger.debug("Payment executed and saved successfully")
           }
           .onFailure { ex ->
-            logger.error("Failed to process payment: ${ex.cause?.message}", ex)
+            logger.debug("Failed to process payment: ${ex.cause?.message}", ex)
           }
       }
     }
