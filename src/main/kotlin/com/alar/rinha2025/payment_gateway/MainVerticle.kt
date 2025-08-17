@@ -11,7 +11,6 @@ import io.vertx.core.Future
 import io.vertx.core.VerticleBase
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
-import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.client.HttpResponse
 import io.vertx.ext.web.handler.BodyHandler
@@ -49,7 +48,7 @@ class MainVerticle : VerticleBase() {
         val payment = Payment(
           correlationId = UUID.fromString(bodyAsJson.getString("correlationId")),
           amount = BigDecimal(bodyAsJson.getString("amount")),
-          requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC).toString()
+          requestedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC)
         )
 
         paymentProcessorClient
@@ -66,7 +65,7 @@ class MainVerticle : VerticleBase() {
             context.response().end()
           }
           .onFailure { ex ->
-            logger.error("Failed to insert payment into DB: ${ex.cause?.message}", ex)
+            logger.debug("Failed to insert payment into DB: ${ex.cause?.message}", ex)
             context.response().statusCode = INTERNAL_SERVER_ERROR.code()
             context.response().end("Internal Server Error: Database insertion failed.")
           }
